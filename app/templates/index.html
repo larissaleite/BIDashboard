@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block chart_js %}
+
+<script type="text/javascript">
+
+	$(function () {
+	    $(document).ready(function () {
+	        $('#chart-test').highcharts({
+	            chart: {
+	                plotBackgroundColor: null,
+	                plotBorderWidth: null,
+	                plotShadow: false,
+	                style: {
+	                    fontFamily: 'Raleway'
+	                }
+	            },
+	            title: {
+	                text: 'Monthly Commits',
+	            },
+	            xAxis: {
+		            categories: {{ months_categories|safe }}
+		        },
+	            yAxis: {
+		            title: {
+		                text: 'Number of commits'
+		            },
+		            plotLines: [{
+		                value: 0,
+		                width: 1,
+		                color: '#808080'
+		            }]
+		        },
+		        legend: {
+		            layout: 'vertical',
+		            align: 'right',
+		            verticalAlign: 'middle',
+		            borderWidth: 0
+		        },
+	            series: {{ commits|safe }}
+
+	        });
+
+            $('#chart-pie-summary').highcharts({
+		        chart: {
+		            plotBackgroundColor: null,
+		            plotBorderWidth: null,
+		            plotShadow: false,
+		            style: {
+                    	fontFamily: 'Raleway'
+                	}
+		        },
+		        title: {
+		            text: 'Types of changed files'
+		        },
+		        tooltip: {
+		            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+		        },
+		        plotOptions: {
+		            pie: {
+		                allowPointSelect: true,
+		                cursor: 'pointer',
+		                dataLabels: {
+		                    enabled: false,
+		                },
+		                showInLegende: true
+		            }
+		        },
+		        series: [{
+		            type: 'pie',
+		            name: 'File type',
+		            data: {{ file_type_percentage|safe }}
+		        }]
+		    });
+
+		});
+	});
+</script>
+
+{% endblock chart_js %}
+
+{% block content %}
+
+	<style type="text/css">
+
+		#sigaa-commits {
+			background-color: #383838;
+		}
+	</style>
+
+	<h3><span class="fa fa-bar-chart-o"></span>&nbsp;Dashboard</h3>
+
+	<div id="chart-test" class="charts"></div>
+
+	<div class="summary">
+
+		<h3>(50) Files Summary</h3>
+
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th>File name</th>
+					<th>Modifications</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for file_frequency in files_frequency %}
+				<tr>
+					<td>{{ file_frequency.file }}</td>
+					<td>{{ file_frequency.frequency }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+	<div id="chart-pie-summary" class="charts"></div>
+
+{% endblock content %}
