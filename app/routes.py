@@ -11,6 +11,14 @@ db = SQLAlchemy(app)
 
 months_map = { '1' : "Jan", '2' : "Feb", '3' : "Mar", '4' : "Apr", '5' : "May", '6' : "Jun", '7' : "Jul", '8' : "Aug", '9' : "Sep", '10' : "Oct" , '11' : "Nov", '12' : "Dec" }
 
+task_type_map = { '1' : "New feature", '2' : "Enhancement", '3' : "Bug-fix" }
+
+task_status_map = { '1' : "Open", '2' : "In progress", '3' : "Finished" }
+
+system_map = { '1' : "SIGAA", '2' : "SIPAC", '3' : "SIGRH" }
+
+day_of_week_map = { '1' : "Monday", '2' : "Tuesday", '3' : "Wednesday", '4' : "Thursday", '5' : "Friday" }
+
 def get_all_users():
 	sql = text('select distinct developer from commits;')
 	result = db.engine.execute(sql)
@@ -39,82 +47,23 @@ def get_months_categories():
 		months_categories.append(month_name)
 	return months_categories
 
-def get_commits_user():
-	commits = []
-	commits_by_month = []
-	for month in get_months_ordered():
-		sql = text("select count(*) from commits where developer='"+user+"' and MONTH(date)="+str(month))
-		result = db.engine.execute(sql)
-		n = str(result.fetchone()[0])
-		commits_by_month.append(int(n))
-
-	commits.append({ 'data' : commits_by_month, 'name' : str(user) })
-
-	return commits
-
-def get_frequent_changed_files_user():
-	files_frequency = []
-	sql = text("select file, count(*) from modifications m inner join commits c on m.id_commit = c.id "
-				+ "where c.developer = '"+user+"' group by file order by count(*) desc limit 10;")
+def get_all_data():
+	all_data = []
+	sql = text('select * from commits_fact c inner join task_dim t on c.id_task = t.id_task inner join date_dim d on c.id_date = d.id_date')
 	result = db.engine.execute(sql)
+
 	for row in result:
-		files_frequency.append({ 'file' : row["file"], 'frequency' : row["count(*)"] })
-	return files_frequency
+		all_data.append({ "system" : system_map[str(row["system"])], "developer" : row["developer"], 
+			"added_files" : row["added_files"], "changed_files" : row["modified_files"], "deleted_files" : row["deleted_files"], 
+			"day_of_week" : day_of_week_map[str(row["day_of_week"])], "task_type" : task_type_map[str(row["task_type"])], "task_status" : task_status_map[str(row["task_status"])] 
+		})
 
-def get_frequent_changed_files():
-	files_frequency = []
-	sql = text("select file, count(*) from modifications group by file order by count(*) desc limit 50;")
-	result = db.engine.execute(sql)
-	for row in result:
-		files_frequency.append({ 'file' : row["file"], 'frequency' : row["count(*)"] })
-	return files_frequency
-
-def get_file_type_percentages(files_frequency):
-	file_type_percentage_dict = dict()
-	file_type_percentage = []
-
-	total_items_dict = 0
-
-	for file_frequency in files_frequency:
-
-		path = file_frequency["file"]
-
-		if "MBean.java" in path:
-			total_items_dict += 1
-			if "MBean" in file_type_percentage_dict:
-				file_type_percentage_dict["MBean"] += 1
-			else:
-				file_type_percentage_dict["MBean"] = 1
-		elif "Dao.java" in path:
-			total_items_dict += 1
-			if "Dao" in file_type_percentage_dict:
-				file_type_percentage_dict["Dao"] += 1
-			else:
-				file_type_percentage_dict["Dao"] = 1
-		elif "Validator.java" in path:
-			total_items_dict += 1
-			if "Validator" in file_type_percentage_dict:
-				file_type_percentage_dict["Validator"] += 1
-			else:
-				file_type_percentage_dict["Validator"] = 1
-
-	total = len(files_frequency)
-	for i in file_type_percentage_dict:
-		file_type_percentage_dict[i] = "{0:.2f}".format((file_type_percentage_dict[i]/float(total))*100)
-
-	file_type_percentage_dict["Other"] = "{0:.2f}".format(((total - total_items_dict)/float(total))*100)
-
-	#turn dict into list
-	for key, value in file_type_percentage_dict.iteritems():
-		temp = [key,float(value)]
-		file_type_percentage.append(temp)
-
-	return file_type_percentage  
+	return all_data
 
 #TEMPLATE FILES
 @app.route('/')
 def show_team_commits():
-	sql = text('select developer, count(*) from commits group by developer order by count(*) desc limit 10;')
+	sql = text('select developer, count(*) from commits group by developer order by count(*) desc;')
 	result = db.engine.execute(sql)
 	commits = []
 
@@ -129,12 +78,69 @@ def show_team_commits():
 			commits_by_month.append(int(n))
 		commits.append({ 'data' : commits_by_month, 'name' : author })
 
-		#print author
-		#print commits_by_month
 	months_categories = get_months_categories()
-	files_frequency = get_frequent_changed_files()
-	file_type_percentage = get_file_type_percentages(files_frequency)
-	return render_template('index.html', commits=commits, months_categories=months_categories, files_frequency=files_frequency, file_type_percentage=file_type_percentage)
+	all_data = get_all_data()
+	return render_template('index.html', commits=commits, months_categories=months_categories, all_data=all_data)
+
+@app.route('/sigaa/commits')
+def show_sigaa_commits():
+	sql = text('select developer, count(*) from commits where system LIKE \'%SIGAA%\' group by developer order by count(*) desc;')
+	result = db.engine.execute(sql)
+	commits = []
+
+	for row in result:
+		author = str(row["developer"])
+		commits_by_month = []
+
+		for month in get_months_ordered():
+			sql = text("select count(*) from commits where developer='"+author+"' and MONTH(date)="+str(month))
+			result = db.engine.execute(sql)
+			n = str(result.fetchone()[0])
+			commits_by_month.append(int(n))
+		commits.append({ 'data' : commits_by_month, 'name' : author })
+
+	months_categories = get_months_categories()
+	return render_template('sigaa.html', commits=commits, months_categories=months_categories)
+
+@app.route('/sipac/commits')
+def show_sipac_commits():
+	sql = text('select developer, count(*) from commits where system LIKE \'%SIPAC%\' group by developer order by count(*) desc;')
+	result = db.engine.execute(sql)
+	commits = []
+
+	for row in result:
+		author = str(row["developer"])
+		commits_by_month = []
+
+		for month in get_months_ordered():
+			sql = text("select count(*) from commits where developer='"+author+"' and MONTH(date)="+str(month))
+			result = db.engine.execute(sql)
+			n = str(result.fetchone()[0])
+			commits_by_month.append(int(n))
+		commits.append({ 'data' : commits_by_month, 'name' : author })
+
+	months_categories = get_months_categories()
+	return render_template('sipac.html', commits=commits, months_categories=months_categories)
+
+@app.route('/sigrh/commits')
+def show_sigrh_commits():
+	sql = text('select developer, count(*) from commits where system LIKE \'%SIGRH%\' group by developer order by count(*) desc;')
+	result = db.engine.execute(sql)
+	commits = []
+
+	for row in result:
+		author = str(row["developer"])
+		commits_by_month = []
+
+		for month in get_months_ordered():
+			sql = text("select count(*) from commits where developer='"+author+"' and MONTH(date)="+str(month))
+			result = db.engine.execute(sql)
+			n = str(result.fetchone()[0])
+			commits_by_month.append(int(n))
+		commits.append({ 'data' : commits_by_month, 'name' : author })
+
+	months_categories = get_months_categories()
+	return render_template('sigrh.html', commits=commits, months_categories=months_categories)
 
 # REST API
 

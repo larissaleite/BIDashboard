@@ -51,7 +51,7 @@
 
 	<style type="text/css">
 
-		#general {
+		#sipac-commits {
 			background-color: #383838;
 		}
 	</style>
@@ -59,39 +59,5 @@
 	<h3><span class="fa fa-bar-chart-o"></span>&nbsp;Dashboard</h3>
 
 	<div id="chart-test" class="charts"></div>
-
-	<div class="summary">
-
-		<h3>Commits Data</h3>
-
-		<table class="table table-hover">
-			<thead>
-				<tr>
-					<th>System</th>
-					<th>Date</th>
-					<th>Day of week</th>
-					<th>Task type</th>
-					<th>Task status</th>
-					<th>Qty added files</th>
-					<th>Qty changed files</th>
-					<th>Qty deleted files</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for data in all_data %}
-				<tr>
-					<td>{{ data.system }}</td>
-					<td>{{ data.date }}</td>
-					<td>{{ data.day_of_week }}</td>
-					<td>{{ data.task_type }}</td>
-					<td>{{ data.task_status }}</td>
-					<td>{{ data.added_files }}</td>
-					<td>{{ data.changed_files }}</td>
-					<td>{{ data.deleted_files }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
 
 {% endblock content %}
