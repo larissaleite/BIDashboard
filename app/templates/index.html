@@ -54,24 +54,176 @@
 		#general {
 			background-color: #383838;
 		}
+
+		.btn-checkbox {
+			width: 190px;
+			text-align: left;
+		}
+
+		.table {
+			margin-top: 3%;
+		}
+
+		select {
+			display: inline !important;
+  			width: 60% !important;
+  			margin-left: 10%;
+  			float: right;
+		}
+
+		.btn-checkbox-filter {
+			width: 380px;
+			text-align: left;
+		}
+
+		.btn-update {
+			margin-top: 12%;
+			width: 65%;
+		}
 	</style>
 
 	<h3><span class="fa fa-bar-chart-o"></span>&nbsp;Dashboard</h3>
 
-	<div id="chart-test" class="charts"></div>
+	<!--<div id="chart-test" class="charts"></div>-->
+
+	<h4>Commits Data</h4>
 
 	<div class="summary">
+		<div class="row">
+			<div class="col-md-3">
+				<p>Choose fields to add to table:</p>
+				<div class="btn-group" data-toggle="buttons">
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> System
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Date
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Month
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Day of Week
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Task type
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Added files
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Changed files
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox">
+				    <input type="checkbox" autocomplete="off"> Deleted files
+				  </label>
+				</div>
+				<br/>
+				<button class="btn btn-primary btn-update">Update</button>
+			</div>
 
-		<h3>Commits Data</h3>
+			<div class="col-md-3">
+				<p>Choose filters:</p>
+				<div class="btn-group" data-toggle="buttons">
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> System 
+				    <select class="form-control">
+				    	<option>SIGAA</option>
+				    	<option>SIGRH</option>
+				    	<option>SIPAC</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> Month 
+				    <select class="form-control">
+				    	<option>Jan</option>
+				    	<option>Feb</option>
+				    	<option>Mar</option>
+				    	<option>Apr</option>
+				    	<option>May</option>
+				    	<option>Jun</option>
+				    	<option>Jul</option>
+				    	<option>Ago</option>
+				    	<option>Sep</option>
+				    	<option>Oct</option>
+				    	<option>Nov</option>
+				    	<option>Dec</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> Day of Week 
+				    <select class="form-control">
+				    	<option>Mon</option>
+				    	<option>Tue</option>
+				    	<option>Wed</option>
+				    	<option>Thu</option>
+				    	<option>Fri</option>
+				    	<option>Sat</option>
+				    	<option>Sun</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> Task type 
+				    <select class="form-control">
+				    	<option>Bug-fix</option>
+				    	<option>Enhancement</option>
+				    	<option>New Feature</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> Added files 
+				    <select class="form-control">
+				    	<option>SUM</option>
+				    	<option>AVG</option>
+				    	<option>MAX</option>
+				    	<option>MIN</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> Changed files
+				  	<select class="form-control">
+				    	<option>SUM</option>
+				    	<option>AVG</option>
+				    	<option>MAX</option>
+				    	<option>MIN</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off"> Deleted files
+				  	<select class="form-control">
+				    	<option>SUM</option>
+				    	<option>AVG</option>
+				    	<option>MAX</option>
+				    	<option>MIN</option>
+				   	</select>
+				  </label>
+
+				</div>
+			</div>
+
+		</div>
 
 		<table class="table table-hover">
 			<thead>
 				<tr>
 					<th>System</th>
 					<th>Date</th>
+					<th>Month</th>
 					<th>Day of week</th>
 					<th>Task type</th>
-					<th>Task status</th>
 					<th>Qty added files</th>
 					<th>Qty changed files</th>
 					<th>Qty deleted files</th>
@@ -82,9 +234,9 @@
 				<tr>
 					<td>{{ data.system }}</td>
 					<td>{{ data.date }}</td>
+					<td>{{ data.month }}</td>
 					<td>{{ data.day_of_week }}</td>
 					<td>{{ data.task_type }}</td>
-					<td>{{ data.task_status }}</td>
 					<td>{{ data.added_files }}</td>
 					<td>{{ data.changed_files }}</td>
 					<td>{{ data.deleted_files }}</td>

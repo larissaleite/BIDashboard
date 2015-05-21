@@ -17,7 +17,7 @@ task_status_map = { '1' : "Open", '2' : "In progress", '3' : "Finished" }
 
 system_map = { '1' : "SIGAA", '2' : "SIPAC", '3' : "SIGRH" }
 
-day_of_week_map = { '1' : "Monday", '2' : "Tuesday", '3' : "Wednesday", '4' : "Thursday", '5' : "Friday" }
+day_of_week_map = { '1' : "Monday", '2' : "Tuesday", '3' : "Wednesday", '4' : "Thursday", '5' : "Friday", '6' : "Saturday", '7' : "Sunday" }
 
 def get_all_users():
 	sql = text('select distinct developer from commits;')
@@ -49,13 +49,13 @@ def get_months_categories():
 
 def get_all_data():
 	all_data = []
-	sql = text('select * from commits_fact c inner join task_dim t on c.id_task = t.id_task inner join date_dim d on c.id_date = d.id_date')
+	sql = text('select * from commits_fact c inner join task_dim t on c.id_task = t.id_task inner join date_dim d on c.id_date = d.id_date inner join system_dim s on c.id_system = s.id_system inner join developer_dim a on c.id_developer = a.id_developer limit 25')
 	result = db.engine.execute(sql)
 
 	for row in result:
 		all_data.append({ "system" : system_map[str(row["system"])], "developer" : row["developer"], 
 			"added_files" : row["added_files"], "changed_files" : row["modified_files"], "deleted_files" : row["deleted_files"], 
-			"day_of_week" : day_of_week_map[str(row["day_of_week"])], "task_type" : task_type_map[str(row["task_type"])], "task_status" : task_status_map[str(row["task_status"])] 
+			"date" : row["date"], "month" : months_map[str(row["month"]+1)], "day_of_week" : day_of_week_map[str(row["day_of_week"])], "task_type" : task_type_map[str(row["type"])] 
 		})
 
 	return all_data
