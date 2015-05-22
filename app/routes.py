@@ -143,6 +143,24 @@ def show_sigrh_commits():
 	return render_template('sigrh.html', commits=commits, months_categories=months_categories)
 
 # REST API
+@app.route('/api/runsql', methods = ['POST'])
+def result_sql():
+	sql = text(request.json["sql"])
+	result = db.engine.execute(sql)
+
+	attr_array = str(sql).split("from")
+	fields = attr_array[0][7:-1].split(", ")
+
+	data = []
+	for row in result:
+		temp_array = {}
+		for field in fields:
+			field = field.split(".")[1]
+			temp_array[field] = str(row[field])
+		data.append(temp_array)
+	
+	return jsonify(data=data)
+
 
 @app.route('/api/commits', methods = ['GET'])
 def get_all_commits():

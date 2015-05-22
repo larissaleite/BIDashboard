@@ -6,6 +6,7 @@
 
 	$(function () {
 	    $(document).ready(function () {
+
 	        $('#chart-test').highcharts({
 	            chart: {
 	                plotBackgroundColor: null,
@@ -40,6 +41,106 @@
 	            series: {{ commits|safe }}
 
 	        });
+
+
+	        $('#update-btn').click(function() {
+	        	var sql = "select ";
+
+				var checkedIds = $(":checkbox:checked").map(function() {
+			        return this.id;
+			    }).get();
+			    console.log(checkedIds);
+			    for (var i = 0; i < checkedIds.length; i++) {
+				    if (checkedIds[i].indexOf('filter') > -1)
+				    	break;
+				    console.log(checkedIds[i])
+				    sql += checkedIds[i] + ", ";
+				}
+				sql = sql.substring(0,sql.length-2);
+				sql += " from ";
+				//console.log(sql);
+
+				if (sql.indexOf("date_dim") > -1 || checkedIds.indexOf("month-filter") > -1 || checkedIds.indexOf("day_of_week-filter") > -1) {
+					sql += "date_dim, "
+				} 
+				if (sql.indexOf("system_dim") > -1 || checkedIds.indexOf("system-filter") > -1) {
+					sql += "system_dim, "
+				}
+				if (sql.indexOf("task_dim") > -1 || checkedIds.indexOf("type-filter") > -1) {
+					sql += "task_dim, "
+				}
+				sql += "commits_fact, "
+
+				sql = sql.substring(0,sql.length-2);
+				sql += " where ";
+				
+				if (sql.indexOf("date_dim") > -1) {
+					sql += "date_dim.id_date = commits_fact.id_date and "
+				} 
+				if (sql.indexOf("system_dim") > -1) {
+					sql += "system_dim.id_system = commits_fact.id_system and "
+				}
+				if (sql.indexOf("task_dim") > -1) {
+					sql += "task_dim.id_task = commits_fact.id_task and "
+				}
+
+				for (var i = 0; i < checkedIds.length; i++) {
+				    if (checkedIds[i].indexOf('filter') > -1) {
+				    	//console.log(checkedIds[i]+"-opt");
+				    	//console.log($( '#'+checkedIds[i]+'-opt' ).val());
+				    	sql += $( '#'+checkedIds[i]+'-opt' ).val();
+				    	sql += " and ";
+				    }
+				}
+
+				sql = sql.substring(0,sql.length-5);
+				sql += ";";
+				console.log(sql);
+
+		        $.ajax({
+		            url: '/api/runsql',
+		            contentType: 'application/json',
+		            data: JSON.stringify({
+		              sql: sql
+		            }),
+		            type: 'POST',
+		            success: function(response) {
+
+		            	var new_table = "<table class=\"table table-hover\"><thead><tr>";
+
+		                //console.log(JSON.stringify(response.data));
+		                var count = 0;
+		                var header = "";
+		                var tbody = "<tbody>"
+		                $.each(response.data, function(idx, element){
+		                	tbody += "<tr>"
+		                	$.each(element, function(k, v) {
+							    //console.log(k + ' is ' + v);
+							    if (count == 0) {
+							    	k = k.substr(0, 1).toUpperCase() + k.substr(1);
+							    	header += "<th>"+k+"</th>";
+							    }
+							    tbody += "<td>"+v+"</td>";
+							});
+							tbody += "</tr>"
+							if (count == 0) {
+								header += "</tr></thead>";
+							}
+							count++;
+					   });
+		               
+		               new_table += header;
+		               new_table += tbody;
+		               new_table += "</tbody></table>";
+
+		               $("#table-div").hide().html(new_table).fadeIn('fast');;
+		                
+		            },
+		            error: function(error) {
+		                console.log(error);
+		            }
+		        });
+			});
 
 		});
 	});
@@ -94,96 +195,96 @@
 				<p>Choose fields to add to table:</p>
 				<div class="btn-group" data-toggle="buttons">
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> System
+				    <input type="checkbox" autocomplete="off" id="system_dim.system"> System
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Date
+				    <input type="checkbox" autocomplete="off" id="date_dim.date"> Date
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Month
+				    <input type="checkbox" autocomplete="off" id="date_dim.month"> Month
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Day of Week
+				    <input type="checkbox" autocomplete="off" id="date_dim.day_of_week"> Day of Week
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Task type
+				    <input type="checkbox" autocomplete="off" id="task_dim.type"> Task type
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Added files
+				    <input type="checkbox" autocomplete="off" id="commits_fact.added_files"> Added files
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Changed files
+				    <input type="checkbox" autocomplete="off" id="commits_fact.modified_files"> Changed files
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off"> Deleted files
+				    <input type="checkbox" autocomplete="off" id="commits_fact.deleted_files"> Deleted files
 				  </label>
 				</div>
 				<br/>
-				<button class="btn btn-primary btn-update">Update</button>
+				<button class="btn btn-primary btn-update" id="update-btn">Update</button>
 			</div>
 
 			<div class="col-md-3">
 				<p>Choose filters:</p>
 				<div class="btn-group" data-toggle="buttons">
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> System 
-				    <select class="form-control">
-				    	<option>SIGAA</option>
-				    	<option>SIGRH</option>
-				    	<option>SIPAC</option>
+				    <input type="checkbox" autocomplete="off" id="system-filter"> System 
+				    <select class="form-control" id="system-filter-opt">
+				    	<option value="system_dim.system = 1">SIGAA</option>
+				    	<option value="system_dim.system = 3">SIGRH</option>
+				    	<option value="system_dim.system = 2">SIPAC</option>
 				   	</select>
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> Month 
-				    <select class="form-control">
-				    	<option>Jan</option>
-				    	<option>Feb</option>
-				    	<option>Mar</option>
-				    	<option>Apr</option>
-				    	<option>May</option>
-				    	<option>Jun</option>
-				    	<option>Jul</option>
-				    	<option>Ago</option>
-				    	<option>Sep</option>
-				    	<option>Oct</option>
-				    	<option>Nov</option>
-				    	<option>Dec</option>
+				    <input type="checkbox" autocomplete="off" id="month-filter"> Month 
+				    <select class="form-control" id="month-filter-opt">
+				    	<option value="date_dim.month = 0">Jan</option>
+				    	<option value="date_dim.month = 1">Feb</option>
+				    	<option value="date_dim.month = 2">Mar</option>
+				    	<option value="date_dim.month = 3">Apr</option>
+				    	<option value="date_dim.month = 4">May</option>
+				    	<option value="date_dim.month = 5">Jun</option>
+				    	<option value="date_dim.month = 6">Jul</option>
+				    	<option value="date_dim.month = 7">Ago</option>
+				    	<option value="date_dim.month = 8">Sep</option>
+				    	<option value="date_dim.month = 9">Oct</option>
+				    	<option value="date_dim.month = 10">Nov</option>
+				    	<option value="date_dim.month = 11">Dec</option>
 				   	</select>
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> Day of Week 
-				    <select class="form-control">
-				    	<option>Mon</option>
-				    	<option>Tue</option>
-				    	<option>Wed</option>
-				    	<option>Thu</option>
-				    	<option>Fri</option>
-				    	<option>Sat</option>
-				    	<option>Sun</option>
+				    <input type="checkbox" autocomplete="off" id="day_of_week-filter"> Day of Week 
+				    <select class="form-control" id="day_of_week-filter-opt">
+				    	<option value="date_dim.day_of_week = 1">Mon</option>
+				    	<option value="date_dim.day_of_week = 2">Tue</option>
+				    	<option value="date_dim.day_of_week = 3">Wed</option>
+				    	<option value="date_dim.day_of_week = 4">Thu</option>
+				    	<option value="date_dim.day_of_week = 5">Fri</option>
+				    	<option value="date_dim.day_of_week = 6">Sat</option>
+				    	<option value="date_dim.day_of_week = 7">Sun</option>
 				   	</select>
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> Task type 
-				    <select class="form-control">
-				    	<option>Bug-fix</option>
-				    	<option>Enhancement</option>
-				    	<option>New Feature</option>
+				    <input type="checkbox" autocomplete="off" id="type-filter"> Task type 
+				    <select class="form-control" id="type-filter-opt">
+				    	<option value="task_dim.type = 3">Bug-fix</option>
+				    	<option value="task_dim.type = 2">Enhancement</option>
+				    	<option value="task_dim.type = 1">New Feature</option>
 				   	</select>
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> Added files 
-				    <select class="form-control">
+				    <input type="checkbox" autocomplete="off" id="added_files-filter"> Added files 
+				    <select class="form-control" id="added_files-filter-opt">
 				    	<option>SUM</option>
 				    	<option>AVG</option>
 				    	<option>MAX</option>
@@ -192,8 +293,8 @@
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> Changed files
-				  	<select class="form-control">
+				    <input type="checkbox" autocomplete="off" id="modified_files-filter"> Changed files
+				  	<select class="form-control" id="modified_files-filter-opt">
 				    	<option>SUM</option>
 				    	<option>AVG</option>
 				    	<option>MAX</option>
@@ -202,8 +303,8 @@
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off"> Deleted files
-				  	<select class="form-control">
+				    <input type="checkbox" autocomplete="off" id="deleted_files-filter"> Deleted files
+				  	<select class="form-control" id="deleted_files-filter-opt">
 				    	<option>SUM</option>
 				    	<option>AVG</option>
 				    	<option>MAX</option>
@@ -216,7 +317,9 @@
 
 		</div>
 
-		<table class="table table-hover">
+		<div id="table-div"></div>
+
+		<!--<table class="table table-hover">
 			<thead>
 				<tr>
 					<th>System</th>
@@ -243,7 +346,7 @@
 				</tr>
 				{% endfor %}
 			</tbody>
-		</table>
+		</table>-->
 	</div>
 
 {% endblock content %}
