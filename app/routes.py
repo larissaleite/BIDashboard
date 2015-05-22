@@ -13,8 +13,6 @@ months_map = { '1' : "Jan", '2' : "Feb", '3' : "Mar", '4' : "Apr", '5' : "May", 
 
 task_type_map = { '1' : "New feature", '2' : "Enhancement", '3' : "Bug-fix" }
 
-task_status_map = { '1' : "Open", '2' : "In progress", '3' : "Finished" }
-
 system_map = { '1' : "SIGAA", '2' : "SIPAC", '3' : "SIGRH" }
 
 day_of_week_map = { '1' : "Monday", '2' : "Tuesday", '3' : "Wednesday", '4' : "Thursday", '5' : "Friday", '6' : "Saturday", '7' : "Sunday" }
@@ -156,7 +154,17 @@ def result_sql():
 		temp_array = {}
 		for field in fields:
 			field = field.split(".")[1]
-			temp_array[field] = str(row[field])
+			if (field == "month"):
+				temp_array[field] = months_map[str(row[field]+1)]
+			elif (field == "day_of_week"):
+				temp_array[field] = day_of_week_map[str(row[field])]
+			elif (field == "type"):
+				temp_array[field] = task_type_map[str(row[field])]
+			elif (field == "system"):
+				temp_array[field] = system_map[str(row[field])]
+			else:
+				temp_array[field] = str(row[field])
+
 		data.append(temp_array)
 	
 	return jsonify(data=data)
