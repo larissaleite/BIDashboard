@@ -53,9 +53,18 @@
 			    for (var i = 0; i < checkedIds.length; i++) {
 				    if (checkedIds[i].indexOf('filter') > -1)
 				    	break;
-				    console.log(checkedIds[i])
-				    sql += checkedIds[i] + ", ";
+				    else if (checkedIds[i].indexOf('special') > -1) {
+				    	sql += $( '#'+checkedIds[i]+'-opt' ).val();
+				    }
+				    else
+				    	sql += checkedIds[i];
+				    sql += ", ";
 				}
+				if (!sql.indexOf("sum") > -1 &&
+					!sql.indexOf("avg") > -1 &&
+					!sql.indexOf("max") > -1 &&
+					!sql.indexOf("min") > -1)
+					sql += "count(*), "
 				sql = sql.substring(0,sql.length-2);
 				sql += " from ";
 				//console.log(sql);
@@ -69,6 +78,10 @@
 				if (sql.indexOf("task_dim") > -1 || checkedIds.indexOf("type-filter") > -1) {
 					sql += "task_dim, "
 				}
+				if (sql.indexOf("developer_dim") > -1) {
+					sql += "developer_dim, "
+				}
+
 				sql += "commits_fact, "
 
 				sql = sql.substring(0,sql.length-2);
@@ -83,17 +96,33 @@
 				if (sql.indexOf("task_dim") > -1) {
 					sql += "task_dim.id_task = commits_fact.id_task and "
 				}
+				if (sql.indexOf("developer_dim") > -1) {
+					sql += "developer_dim.id_developer = commits_fact.id_developer and "
+				}
 
 				for (var i = 0; i < checkedIds.length; i++) {
 				    if (checkedIds[i].indexOf('filter') > -1) {
-				    	//console.log(checkedIds[i]+"-opt");
-				    	//console.log($( '#'+checkedIds[i]+'-opt' ).val());
 				    	sql += $( '#'+checkedIds[i]+'-opt' ).val();
 				    	sql += " and ";
 				    }
 				}
 
 				sql = sql.substring(0,sql.length-5);
+
+				if (sql.indexOf('sum') > -1 ||
+					sql.indexOf('avg') > -1 ||
+					sql.indexOf('max') > -1 ||
+					sql.indexOf('min') > -1 ||
+					sql.indexOf('count') > -1) {
+					sql += " group by "
+					for (var i = 0; i < checkedIds.length; i++) {
+				    	if (checkedIds[i].indexOf('filter') > -1 || checkedIds[i].indexOf('special') > -1)
+				    		break;
+				    	else
+				    		sql += checkedIds[i] + ', '
+				    }
+				    sql = sql.substring(0,sql.length-2);
+				}
 				sql += ";";
 				console.log(sql);
 
@@ -118,6 +147,9 @@
 							    //console.log(k + ' is ' + v);
 							    if (count == 0) {
 							    	k = k.substr(0, 1).toUpperCase() + k.substr(1);
+							    	if (k == "Count(*)") {
+							    		k = "Number of Commits";
+							    	}
 							    	header += "<th>"+k+"</th>";
 							    }
 							    tbody += "<td>"+v+"</td>";
@@ -156,8 +188,8 @@
 			background-color: #383838;
 		}
 
-		.btn-checkbox {
-			width: 190px;
+		.btn-checkbox, .btn-checkbox-filter {
+			width: 380px;
 			text-align: left;
 		}
 
@@ -170,11 +202,6 @@
   			width: 60% !important;
   			margin-left: 10%;
   			float: right;
-		}
-
-		.btn-checkbox-filter {
-			width: 380px;
-			text-align: left;
 		}
 
 		.btn-update {
@@ -191,7 +218,7 @@
 
 	<div class="summary">
 		<div class="row">
-			<div class="col-md-3">
+			<div class="col-md-4">
 				<p>Choose fields to add to table:</p>
 				<div class="btn-group" data-toggle="buttons">
 				  <label class="btn btn-default btn-checkbox">
@@ -215,15 +242,37 @@
 				  </label>
 				  <br/>
 				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off" id="commits_fact.added_files"> Added files
+				    <input type="checkbox" autocomplete="off" id="developer_dim.developer"> Developer
 				  </label>
 				  <br/>
-				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off" id="commits_fact.modified_files"> Changed files
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off" id="added_files-special"> Added files 
+				    <select class="form-control" id="added_files-special-opt">
+				    	<option value="sum(commits_fact.added_files)">SUM</option>
+				    	<option value="avg(commits_fact.added_files)">AVG</option>
+				    	<option value="max(commits_fact.added_files)">MAX</option>
+				    	<option value="min(commits_fact.added_files)">MIN</option>
+				   	</select>
 				  </label>
 				  <br/>
-				  <label class="btn btn-default btn-checkbox">
-				    <input type="checkbox" autocomplete="off" id="commits_fact.deleted_files"> Deleted files
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off" id="modified_files-special"> Changed files
+				  	<select class="form-control" id="modified_files-special-opt">
+				    	<option value="sum(commits_fact.modified_files)">SUM</option>
+				    	<option value="avg(commits_fact.modified_files)">AVG</option>
+				    	<option value="max(commits_fact.modified_files)">MAX</option>
+				    	<option value="min(commits_fact.modified_files)">MIN</option>
+				   	</select>
+				  </label>
+				  <br/>
+				  <label class="btn btn-default btn-checkbox-filter">
+				    <input type="checkbox" autocomplete="off" id="deleted_files-special"> Deleted files
+				  	<select class="form-control" id="deleted_files-special-opt">
+				    	<option value="sum(commits_fact.deleted_files)">SUM</option>
+				    	<option value="avg(commits_fact.deleted_files)">AVG</option>
+				    	<option value="max(commits_fact.deleted_files)">MAX</option>
+				    	<option value="min(commits_fact.deleted_files)">MIN</option>
+				   	</select>
 				  </label>
 				</div>
 				<br/>
@@ -282,35 +331,6 @@
 				   	</select>
 				  </label>
 				  <br/>
-				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off" id="added_files-filter"> Added files 
-				    <select class="form-control" id="added_files-filter-opt">
-				    	<option>SUM</option>
-				    	<option>AVG</option>
-				    	<option>MAX</option>
-				    	<option>MIN</option>
-				   	</select>
-				  </label>
-				  <br/>
-				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off" id="modified_files-filter"> Changed files
-				  	<select class="form-control" id="modified_files-filter-opt">
-				    	<option>SUM</option>
-				    	<option>AVG</option>
-				    	<option>MAX</option>
-				    	<option>MIN</option>
-				   	</select>
-				  </label>
-				  <br/>
-				  <label class="btn btn-default btn-checkbox-filter">
-				    <input type="checkbox" autocomplete="off" id="deleted_files-filter"> Deleted files
-				  	<select class="form-control" id="deleted_files-filter-opt">
-				    	<option>SUM</option>
-				    	<option>AVG</option>
-				    	<option>MAX</option>
-				    	<option>MIN</option>
-				   	</select>
-				  </label>
 
 				</div>
 			</div>

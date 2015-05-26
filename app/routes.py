@@ -153,7 +153,8 @@ def result_sql():
 	for row in result:
 		temp_array = {}
 		for field in fields:
-			field = field.split(".")[1]
+			if (not field.startswith("sum") and not field.startswith("avg") and not field.startswith("max") and not field.startswith("min") and not field.startswith("count")):
+				field = field.split(".")[1]
 			if (field == "month"):
 				temp_array[field] = months_map[str(row[field]+1)]
 			elif (field == "day_of_week"):
