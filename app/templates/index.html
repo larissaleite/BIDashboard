@@ -42,6 +42,53 @@
 
 	        });
 
+	        $(document).on('click', '.glyphicon-chevron-left', function(){
+			  var item = $(this).closest("th").index();
+
+			  var table = document.getElementById('tabela-result');
+			  var rows = jQuery('tr', table);
+			  var cols;
+			  rows.each(function() {
+			  	cols = jQuery(this).children('th, td');
+			  	cols.eq(item).detach().insertBefore(cols.eq(item-1));
+			  });
+
+			  if (item == 1) {
+			  	console.log("Clicou no index 1");
+
+			  	$('th:first-child').find('.glyphicon-chevron-left').remove();
+			  	$('th:nth-child(2)').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child(2)').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  } else if (item == $("#tabela-result > tbody").find("> tr:first > td").length - 1) {
+			  	console.log("Clicou no index tamanho -1");
+
+			  	$('th:last-child').find('.glyphicon-chevron-right').remove();
+			  	var t = item;
+			  	console.log($('th:nth-child('+ t +')').text());
+			  	$('th:nth-child('+ t +')').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child('+ t +')').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  }
+			});
+
+			$(document).on('click', '.glyphicon-chevron-right', function(){
+			  var item = $(this).closest("th").index();
+
+			  var table = document.getElementById('tabela-result');
+			  var rows = jQuery('tr', table);
+			  var cols;
+			  rows.each(function() {
+			  	cols = jQuery(this).children('th, td');
+			  	cols.eq(item+1).detach().insertBefore(cols.eq(item));
+			  });
+
+			  if (item == 0) {
+			  	$('th:first-child').find('.glyphicon-chevron-left').remove();
+			  	$('th:nth-child(2)').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child(2)').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  } else if (item == $("#tabela-result > tbody").find("> tr:first > td").length - 2) {
+			  	$('th:last-child').find('.glyphicon-chevron-right').remove();
+			  	var t = item+1;
+			  	console.log($('th:nth-child('+ t +')').text());
+			  	$('th:nth-child('+ t +')').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child('+ t +')').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  }
+			});
 
 	        $('#update-btn').click(function() {
 	        	var sql = "select ";
@@ -67,7 +114,6 @@
 					sql += "count(*), "
 				sql = sql.substring(0,sql.length-2);
 				sql += " from ";
-				//console.log(sql);
 
 				if (sql.indexOf("date_dim") > -1 || checkedIds.indexOf("month-filter") > -1 || checkedIds.indexOf("day_of_week-filter") > -1) {
 					sql += "date_dim, "
@@ -109,20 +155,15 @@
 
 				sql = sql.substring(0,sql.length-5);
 
-				if (sql.indexOf('sum') > -1 ||
-					sql.indexOf('avg') > -1 ||
-					sql.indexOf('max') > -1 ||
-					sql.indexOf('min') > -1 ||
-					sql.indexOf('count') > -1) {
-					sql += " group by "
-					for (var i = 0; i < checkedIds.length; i++) {
-				    	if (checkedIds[i].indexOf('filter') > -1 || checkedIds[i].indexOf('special') > -1)
-				    		break;
-				    	else
-				    		sql += checkedIds[i] + ', '
-				    }
-				    sql = sql.substring(0,sql.length-2);
-				}
+				sql += " group by "
+				for (var i = 0; i < checkedIds.length; i++) {
+			    	if (checkedIds[i].indexOf('filter') > -1 || checkedIds[i].indexOf('special') > -1)
+			    		break;
+			    	else
+			    		sql += checkedIds[i] + ', '
+			    }
+			    sql = sql.substring(0,sql.length-2);
+				
 				sql += ";";
 				console.log(sql);
 
@@ -135,12 +176,14 @@
 		            type: 'POST',
 		            success: function(response) {
 
-		            	var new_table = "<table class=\"table table-hover\"><thead><tr>";
+		            	var col = 0;
 
-		                //console.log(JSON.stringify(response.data));
+		            	var new_table = "<table class=\"table table-hover\" id=\"tabela-result\"><thead><tr>";
+
 		                var count = 0;
 		                var header = "";
 		                var tbody = "<tbody>"
+
 		                $.each(response.data, function(idx, element){
 		                	tbody += "<tr>"
 		                	$.each(element, function(k, v) {
@@ -150,8 +193,15 @@
 							    	if (k == "Count(*)") {
 							    		k = "Number of Commits";
 							    	}
-							    	header += "<th>"+k+"</th>";
+							    	if (col == 0) {
+							    		header += "<th>"+k+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>";
+							    	} else if (col == Object.keys(element).length-1) {
+							    		header += "<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+k+"</th>";
+							    	} else {
+							    		header += "<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+k+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>";
+							    	}
 							    }
+							    col++;
 							    tbody += "<td>"+v+"</td>";
 							});
 							tbody += "</tr>"
@@ -165,7 +215,7 @@
 		               new_table += tbody;
 		               new_table += "</tbody></table>";
 
-		               $("#table-div").hide().html(new_table).fadeIn('fast');;
+		               $("#table-div").hide().html(new_table).fadeIn('fast');
 		                
 		            },
 		            error: function(error) {
@@ -207,6 +257,14 @@
 		.btn-update {
 			margin-top: 12%;
 			width: 65%;
+		}
+
+		.glyphicon-chevron-left {
+			margin-right: 10px;
+		}
+
+		.glyphicon-chevron-right {
+			margin-left: 10px;
 		}
 	</style>
 
