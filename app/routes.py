@@ -2,7 +2,7 @@
 from flask import Flask, render_template, jsonify, make_response, request, flash
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
-import datetime
+import datetime, collections, json
   
 app = Flask(__name__)
 
@@ -149,9 +149,11 @@ def result_sql():
 	attr_array = str(sql).split("from")
 	fields = attr_array[0][7:-1].split(", ")
 
+	#print result.keys() #print columns
+
 	data = []
 	for row in result:
-		temp_array = {}
+		temp_array = collections.OrderedDict()
 		for field in fields:
 			if (not field.startswith("sum") and not field.startswith("avg") and not field.startswith("max") and not field.startswith("min") and not field.startswith("count")):
 				field = field.split(".")[1]
@@ -166,9 +168,11 @@ def result_sql():
 			else:
 				temp_array[field] = str(row[field])
 
+		#ordered_array = collections.OrderedDict(sorted(temp_array.items()))
+		#print temp_array
 		data.append(temp_array)
-	
-	return jsonify(data=data)
+
+	return json.dumps(data)
 
 
 @app.route('/api/commits', methods = ['GET'])
