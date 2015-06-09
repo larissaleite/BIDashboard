@@ -42,98 +42,76 @@
 
 	        });
 
-	        function MergeCommonRows(table) {
-			    var firstColumnBrakes = [];
-			    // iterate through the columns instead of passing each column as function parameter:
-			    for(var i=1; i<=table.find('th').length; i++){
-			        var previous = null, cellToExtend = null, rowspan = 1;
-			        table.find("td:nth-child(" + i + ")").each(function(index, e){
-			            var jthis = $(this), content = jthis.text();
-			            // check if current row "break" exist in the array. If not, then extend rowspan:
-			            if (previous == content && content !== "" && $.inArray(index, firstColumnBrakes) === -1) {
-			                // hide the row instead of remove(), so the DOM index won't "move" inside loop.
-			                jthis.addClass('hidden');
-			                cellToExtend.attr("rowspan", (rowspan = rowspan+1));
-			            }else{
-			                // store row breaks only for the first column:
-			                if(i === 1) firstColumnBrakes.push(index);
-			                rowspan = 1;
-			                previous = content;
-			                cellToExtend = jthis;
-			            }
-			        });
-			    }
-			    // now remove hidden td's (or leave them hidden if you wish):
-			    $('td.hidden').remove();
-			}
+	        $(document).on('click', '.glyphicon-chevron-left', function(){
+			  var item = $(this).closest("th").index();
 
-	        var options = [];
+			  var table = document.getElementById('tabela-result');
+			  var rows = jQuery('tr', table);
+			  var cols;
+			  rows.each(function() {
+			  	cols = jQuery(this).children('th, td');
+			  	cols.eq(item).detach().insertBefore(cols.eq(item-1));
+			  });
+
+			  if (item == 1) {
+			  	console.log("Clicou no index 1");
+
+			  	$('th:first-child').find('.glyphicon-chevron-left').remove();
+			  	$('th:nth-child(2)').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child(2)').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  } else if (item == $("#tabela-result > tbody").find("> tr:first > td").length - 1) {
+			  	console.log("Clicou no index tamanho -1");
+
+			  	$('th:last-child').find('.glyphicon-chevron-right').remove();
+			  	var t = item;
+			  	console.log($('th:nth-child('+ t +')').text());
+			  	$('th:nth-child('+ t +')').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child('+ t +')').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  }
+			});
+
+			$(document).on('click', '.glyphicon-chevron-right', function(){
+			  var item = $(this).closest("th").index();
+
+			  var table = document.getElementById('tabela-result');
+			  var rows = jQuery('tr', table);
+			  var cols;
+			  rows.each(function() {
+			  	cols = jQuery(this).children('th, td');
+			  	cols.eq(item+1).detach().insertBefore(cols.eq(item));
+			  });
+
+			  if (item == 0) {
+			  	$('th:first-child').find('.glyphicon-chevron-left').remove();
+			  	$('th:nth-child(2)').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child(2)').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  } else if (item == $("#tabela-result > tbody").find("> tr:first > td").length - 2) {
+			  	$('th:last-child').find('.glyphicon-chevron-right').remove();
+			  	var t = item+1;
+			  	console.log($('th:nth-child('+ t +')').text());
+			  	$('th:nth-child('+ t +')').html("<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+$('th:nth-child('+ t +')').text()+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>");
+			  }
+			});
 
 	        $('#update-btn').click(function() {
+	        	var sql = "select ";
 
 				var checkedIds = $(":checkbox:checked").map(function() {
 			        return this.id;
 			    }).get();
 			    console.log(checkedIds);
 			    for (var i = 0; i < checkedIds.length; i++) {
-				    if (checkedIds[i].indexOf('filter') > -1) {
+				    if (checkedIds[i].indexOf('filter') > -1)
 				    	break;
-				    } else if (checkedIds[i].indexOf('special') > -1) {
-				    	//options.push($( '#'+checkedIds[i]+'-opt' ).val())
-				    	//sql += $( '#'+checkedIds[i]+'-opt' ).val();
-				    } else {
-				    	//sql += checkedIds[i];
-				    	options.push(checkedIds[i])
-				    }
-				    //sql += ", ";
-				}
-
-				for (var i=0; i<options.length; i++) {
-					$('.modal-body').append("<div class='row'><div class='col-md-1'>"+(i+1)+":</div> <div class='col-md-11'> <select style='width:100% !important;' class='form-control' id='select_order_"+i+"'>");
-					for (var j=0; j<options.length; j++) {
-						var options_text = options[j].split(".")[1]
-						options_text = options_text.charAt(0).toUpperCase() + options_text.slice(1)  
-						$('#select_order_'+i).append("<option value="+options[j]+">"+options_text+"</option>");
-						if (j == options.length-1) {
-							$('.modal-body').append("</select></div><br/>");
-						}
-					}
-					$('.modal-body').append("</div>");
-				}
-				$('#modal-commit').modal('toggle');
-
-			});
-
-			$('#close-btn').click(function() {
-				options = [];
-				$('.modal-body').html("");
-			})
-
-			$('#submit-btn').click(function() {
-
-				var sql = "select ";
-
-				for (var i=0; i<options.length; i++) {
-					sql += $('#select_order_'+i).val();
-					sql += ", ";
-				}
-
-				var checkedIds = $(":checkbox:checked").map(function() {
-			        return this.id;
-			    }).get();
-
-				for (var i = 0; i < checkedIds.length; i++) {
-				    if (checkedIds[i].indexOf('special') > -1) {
+				    else if (checkedIds[i].indexOf('special') > -1) {
 				    	sql += $( '#'+checkedIds[i]+'-opt' ).val();
-				    	sql += ", ";
-				    } 
+				    }
+				    else
+				    	sql += checkedIds[i];
+				    sql += ", ";
 				}
-
 				if (!sql.indexOf("sum") > -1 &&
 					!sql.indexOf("avg") > -1 &&
 					!sql.indexOf("max") > -1 &&
 					!sql.indexOf("min") > -1)
-					sql += "count(*), ";
+					sql += "count(*), "
 				
 				sql = sql.substring(0,sql.length-2);
 				sql += " from ";
@@ -186,14 +164,7 @@
 			    		sql += checkedIds[i] + ', '
 			    }
 			    sql = sql.substring(0,sql.length-2);
-
-			    sql += " order by "
-			    for (var i=0; i<options.length; i++) {
-					sql += $('#select_order_'+i).val();
-					sql += ", ";
-				}
-				sql = sql.substring(0,sql.length-2);
-
+				
 				sql += ";";
 				console.log(sql);
 
@@ -204,36 +175,31 @@
 		              sql: sql
 		            }),
 		            type: 'POST',
-		            dataType: 'json',
 		            success: function(response) {
 
 		            	var col = 0;
 
-		            	var new_table = "<table class=\"table\" id=\"tabela-result\"><thead><tr>";
+		            	var new_table = "<table class=\"table table-hover\" id=\"tabela-result\"><thead><tr>";
 
 		                var count = 0;
 		                var header = "";
 		                var tbody = "<tbody>"
 
-		                $.each(response, function(idx, element){
+		                $.each(response.data, function(idx, element){
 		                	tbody += "<tr>"
 		                	$.each(element, function(k, v) {
+							    //console.log(k + ' is ' + v);
 							    if (count == 0) {
 							    	k = k.substr(0, 1).toUpperCase() + k.substr(1);
 							    	if (k == "Count(*)") {
-							    		k = "Commits";
-							    	} else if (k.indexOf("(") > -1) {
-							    		var first_name = k.split("(")[0]
-							    		var temp = k.split("(")[1].split(".")[1]
-							    		temp = temp.replace("_", " ")
-							    		k = first_name + "(" + temp  
+							    		k = "Number of Commits";
 							    	}
 							    	if (col == 0) {
-							    		header += "<th>"+k+"</th>";
+							    		header += "<th>"+k+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>";
 							    	} else if (col == Object.keys(element).length-1) {
-							    		header += "<th>"+k+"</th>";
+							    		header += "<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+k+"</th>";
 							    	} else {
-							    		header += "<th>"+k+"</th>";
+							    		header += "<th><span class=\"glyphicon glyphicon-chevron-left\"></span>"+k+"<span class=\"glyphicon glyphicon-chevron-right\"></span></th>";
 							    	}
 							    }
 							    col++;
@@ -251,17 +217,12 @@
 		               new_table += "</tbody></table>";
 
 		               $("#table-div").hide().html(new_table).fadeIn('fast');
-
-		               MergeCommonRows($('#tabela-result'));
 		                
 		            },
 		            error: function(error) {
 		                console.log(error);
 		            }
 		        });
-
-				options = [];
-				$('.modal-body').html("");
 			});
 
 		});
@@ -297,6 +258,14 @@
 		.btn-update {
 			margin-top: 12%;
 			width: 65%;
+		}
+
+		.glyphicon-chevron-left {
+			margin-right: 10px;
+		}
+
+		.glyphicon-chevron-right {
+			margin-left: 10px;
 		}
 	</style>
 
@@ -429,24 +398,34 @@
 
 		<div id="table-div"></div>
 
+		<!--<table class="table table-hover">
+			<thead>
+				<tr>
+					<th>System</th>
+					<th>Date</th>
+					<th>Month</th>
+					<th>Day of week</th>
+					<th>Task type</th>
+					<th>Qty added files</th>
+					<th>Qty changed files</th>
+					<th>Qty deleted files</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for data in all_data %}
+				<tr>
+					<td>{{ data.system }}</td>
+					<td>{{ data.date }}</td>
+					<td>{{ data.month }}</td>
+					<td>{{ data.day_of_week }}</td>
+					<td>{{ data.task_type }}</td>
+					<td>{{ data.added_files }}</td>
+					<td>{{ data.changed_files }}</td>
+					<td>{{ data.deleted_files }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>-->
 	</div>
-
-	<div class="modal fade" id="modal-commit" role="dialog">
-	  <div class="modal-dialog">
-	    <div class="modal-content">
-	      <div class="modal-header">
-	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	        <h4 class="modal-title">Select fields order</h4>
-	      </div>
-	      <div class="modal-body">
-	        
-	      </div>
-	      <div class="modal-footer">
-	      	<button type="button" class="btn btn-primary" id="submit-btn" data-dismiss="modal">Submit</button>
-	        <button id="close-btn" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	      </div>
-	    </div><!-- /.modal-content -->
-	  </div><!-- /.modal-dialog -->
-	</div><!-- /.modal -->
 
 {% endblock content %}
